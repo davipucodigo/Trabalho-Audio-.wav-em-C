@@ -17,6 +17,7 @@ void MENU () {
         printf("\n|  ███████╗██████╔╝██║   ██║   ╚██████╔╝██║  ██║  | ");
         printf("\n|  ╚══════╝╚═════╝ ╚═╝   ╚═╝    ╚═════╝ ╚═╝  ╚═╝  | ");
         printf("\n|                                                 | ");
+        printf("\n| DAVI SANT'ANNA VIEIRA  -  4324                  | ");
         printf("\n| - - - - - - - - - - - - - - - - - - - - - - - - | ");
         printf("\n|  1> Tocar                                       | ");
         printf("\n|  2> Extrair trecho                              | ");
