@@ -1,8 +1,6 @@
 #include <stdio.h>
 
-
-int main () {
-
+void MENU () {
         printf("\n___________________________________________________ ");
         printf("\n|                                                 | ");
         printf("\n|   █████╗ ██╗   ██╗██████╗ ██╗ ██████╗           | ");
@@ -27,7 +25,12 @@ int main () {
         printf("\n|_________________________________________________| ");
         printf("\n Escolha o numero >>");
         printf("\n");
+}
 
+
+int main () {
+
+    MENU();
         // --------- Audio cut interface
     return 0;
 }
