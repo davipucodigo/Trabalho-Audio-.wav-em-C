@@ -28,9 +28,20 @@ void MENU () {
         printf("\n");
 }
 
+typedef struct
+{
+    /* data */
+}wav_file;
+
+
+MOSTRA_AUDIO(wav_file * p) {
+    
+}
 
 int main () {
 
+    wav_file audio;
+    MOSTRA_AUDIO(&audio);
     MENU();
         // --------- Audio cut interface
     return 0;
