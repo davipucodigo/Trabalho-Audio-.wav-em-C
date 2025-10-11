@@ -50,7 +50,7 @@ typedef struct
     //...data
 }wav_file;
 
-MOSTRA_AUDIO(wav_file * p,char * nome_arq) {
+void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
     FILE * ESCREVENDO;
     FILE * LEARQUIVO;
         ESCREVENDO = fopen("analise_WAVE.txt","wt");
@@ -79,12 +79,12 @@ MOSTRA_AUDIO(wav_file * p,char * nome_arq) {
 
     // unsigned (0 a 225).
     // signed (-128 a 127) utiliza complemento de dois.
-    unsigned char byte_lido; 
+    unsigned char byte; 
     int count = 0;
 
     for (int i = 0; i < p->Subchunk2Size; i++) {
         // Tenta ler o próximo byte
-        if (fread(&byte_lido, 1, 1, LEARQUIVO) != 1) {
+        if (fread(&byte, 1, 1, LEARQUIVO) != 1) {
             break; // Sai se não conseguir ler o próximo byte (Fim do arquivo)
         }
         count++;
@@ -93,7 +93,7 @@ MOSTRA_AUDIO(wav_file * p,char * nome_arq) {
             fprintf(ESCREVENDO,"\n");
         }
         // %02X -> Imprime o byte em hexadecimal (X), com 2 dígitos, preenchidos com zero (0).
-        fprintf(ESCREVENDO,"%02X ", byte_lido); 
+        fprintf(ESCREVENDO,"%02X ", byte); 
     }
     
     fprintf(ESCREVENDO,"\n\n--- Fim dos Dados de Audio ---\n");
