@@ -50,39 +50,67 @@ typedef struct
     //...data
 }wav_file;
 
-MOSTRA_AUDIO(wav_file * p) {
+MOSTRA_AUDIO(wav_file * p,char * nome_arq) {
+    FILE * ESCREVENDO;
     FILE * LEARQUIVO;
-
-    LEARQUIVO = fopen("audio/smb_world_clear.wav","rb");
+        ESCREVENDO = fopen("analise_WAVE.txt","wt");
+        LEARQUIVO = fopen(nome_arq,"rb");
 
         if (!LEARQUIVO) printf("Não foi possivel abrir.");
         else {
             fread(p,sizeof(wav_file),1,LEARQUIVO);
-            //Se usar %s para printar RIFF. A falta do '/0' fará com que a leitura seja incorreta, passando dos 4 bytes que há por conta do indicador de fim '0'.
+            //Se usar %s para printar RIFF. A falta do '/0' fará com que a leitura seja "incorreta", passando dos 4 bytes que há por conta do indicador de fim '/0' necessários não contidos na estrutura do arquivos.
             //Se usar uint32 para representar RIFF a arquitetura Intel/AMD registra os numeros ao contrario na memoria ficando FFIR que ao ler em hexa sai ao contrario.
             //Usar char e ler caracter por caracter.
-            printf("\nChunckID: %c%c%c%c", p->ChunckID[0],p->ChunckID[1],p->ChunckID[2],p->ChunckID[3]);
-            printf("\nChunckSize: %d ",p->ChunkSize);
-            printf("\nFormat: %c%c%c%c", p->Format[0], p->Format[1], p->Format[2], p->Format[3]);
-            printf("\nSubchunk1ID: %c%c%c%c", p->Subchunk1ID[0], p->Subchunk1ID[1], p->Subchunk1ID[2], p->Subchunk1ID[3]);
-            printf("\nSubchunk1Size: %d", p->Subchunk1Size);
-            printf("\nAudioFormat: %d ", p->AudioFormat);
-            printf("\nNumChannels: %d ", p->NumChannels);
-            printf("\nSampleRate: %d ", p->SampleRate);
-            printf("\nByteRate: %d ", p->ByteRate);
-            printf("\nBlackAlign: %d ", p->BlackAlign);
-            printf("\nBitsPerSample: %d ", p->BitsPerSample);
-            printf("\nSubchunk2ID: %c%c%c%c", p->Subchunk2ID[0], p->Subchunk2ID[1], p->Subchunk2ID[2], p->Subchunk2ID[3]);
-            printf("\nSubchunk2Size: %d ", p->Subchunk2Size);
-        }
+            fprintf(ESCREVENDO,"\nChunckID: %c%c%c%c", p->ChunckID[0],p->ChunckID[1],p->ChunckID[2],p->ChunckID[3]);
+            fprintf(ESCREVENDO,"\nChunckSize: %d ",p->ChunkSize);
+            fprintf(ESCREVENDO,"\nFormat: %c%c%c%c", p->Format[0], p->Format[1], p->Format[2], p->Format[3]);
+            fprintf(ESCREVENDO,"\nSubchunk1ID: %c%c%c%c", p->Subchunk1ID[0], p->Subchunk1ID[1], p->Subchunk1ID[2], p->Subchunk1ID[3]);
+            fprintf(ESCREVENDO,"\nSubchunk1Size: %d", p->Subchunk1Size);
+            fprintf(ESCREVENDO,"\nAudioFormat: %d ", p->AudioFormat);
+            fprintf(ESCREVENDO,"\nNumChannels: %d ", p->NumChannels);
+            fprintf(ESCREVENDO,"\nSampleRate: %d ", p->SampleRate);
+            fprintf(ESCREVENDO,"\nByteRate: %d ", p->ByteRate);
+            fprintf(ESCREVENDO,"\nBlackAlign: %d ", p->BlackAlign);
+            fprintf(ESCREVENDO,"\nBitsPerSample: %d ", p->BitsPerSample);
+            fprintf(ESCREVENDO,"\nSubchunk2ID: %c%c%c%c", p->Subchunk2ID[0], p->Subchunk2ID[1], p->Subchunk2ID[2], p->Subchunk2ID[3]);
+            fprintf(ESCREVENDO,"\nSubchunk2Size: %d ", p->Subchunk2Size);
+            fprintf(ESCREVENDO,"\n\n--- Dados de Audio (Samples) em Hexadecimal ---\n");
 
+    // unsigned (0 a 225).
+    // signed (-128 a 127) utiliza complemento de dois.
+    unsigned char byte_lido; 
+    int count = 0;
+
+    for (int i = 0; i < p->Subchunk2Size; i++) {
+        // Tenta ler o próximo byte
+        if (fread(&byte_lido, 1, 1, LEARQUIVO) != 1) {
+            break; // Sai se não conseguir ler o próximo byte (Fim do arquivo)
+        }
+        count++;
+
+        if(count % 16 == 0) {
+            fprintf(ESCREVENDO,"\n");
+        }
+        // %02X -> Imprime o byte em hexadecimal (X), com 2 dígitos, preenchidos com zero (0).
+        fprintf(ESCREVENDO,"%02X ", byte_lido); 
+    }
+    
+    fprintf(ESCREVENDO,"\n\n--- Fim dos Dados de Audio ---\n");
+        }
     fclose(LEARQUIVO);
+    fclose(ESCREVENDO);
 }
+
+// void EXTRAIR_AUDIO(wav_file * p) {}
 
 int main () {
 
     wav_file audio;
-    MOSTRA_AUDIO(&audio);
+    char endereço_arquivo[100] = "audio/smb_world_clear.wav";
+
+    MOSTRA_AUDIO(&audio,endereço_arquivo);
+    //EXTRAIR_AUDIO(&audio);
     printf("\n\n");
     //MENU();
         // --------- Audio cut interface
