@@ -29,6 +29,55 @@ void MENU () {
         printf("\n");
 }
 
+/*
+
+1 byte = 8 bits;
+.
+    É a forma de organização da estrutura do .wav
+    "chunks" (pedaços ou blocos de dados)
+
+    Subchunk1Size:
+        O tamanho do restante do sub-bloco de formato em bytes. 
+        Para áudio PCM (não comprimido), o valor é sempre 16.
+
+    AudioFormat:
+    	Indica o tipo de formato de áudio.
+        O valor 1 (um) significa PCM (Pulse Code Modulation),
+        que é áudio não comprimido. Outros valores indicam
+        formatos comprimidos.
+    
+    NumChannels:    
+        O número de canais de áudio. 
+        1 para Mono, 2 para Estéreo.
+
+    SampleRate:
+        Taxa com que se lê o arquivo.  
+        O número de amostras (samples) de áudio gravadas
+        por segundo (em Hz). 22050 Hz é uma taxa comum 
+        (por exemplo, metade da qualidade de CD).
+
+    ByteRate:
+        O número de bytes que devem ser lidos por segundo (em B/s).
+        Calculado como: SampleRate * NumChannels * (BitsPerSample / 8).
+        Neste caso: 22050⋅1⋅(16/8)=22050⋅2=44100.
+
+    BlockAlign:
+        O número de bytes por bloco de amostra. É o tamanho de uma única amostra,
+        incluindo todos os canais. Calculado como: NumChannels * (BitsPerSample / 8).
+        Neste caso: 1⋅(16/8)=2 bytes.
+
+    BitsPerSample:
+        O número de bits usados para armazenar cada amostra de áudio por canal.
+        16 bits é a qualidade de áudio de CD (valores inteiros de −32768 a 32767).
+
+    Data:
+        É uma constante (4 caracteres ASCII) que marca o início do sub-bloco onde os dados de áudio reais estão armazenados.
+    
+    Subchunk2Size:
+        O tamanho em bytes dos dados de áudio brutos (as amostras reais).
+.
+*/
+
 typedef struct
 {
     //RIFF
