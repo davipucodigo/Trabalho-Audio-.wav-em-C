@@ -126,23 +126,26 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
             fprintf(ESCREVENDO,"\nSubchunk2Size: %d ", p->Subchunk2Size);
             fprintf(ESCREVENDO,"\n\n--- Dados de Audio (Samples) em Hexadecimal ---\n");
 
-            // unsigned (0 a 225).
-            // signed (-128 a 127) utiliza complemento de dois.
-            unsigned char byte; 
+            int16_t byte; 
             int count = 0;
 
             for (int i = 0; i < p->Subchunk2Size; i++) {
                 // Tenta ler o próximo byte
-                if (fread(&byte, 1, 1, LEARQUIVO) != 1) {
-                    break; // Sai se não conseguir ler o próximo byte (Fim do arquivo)
+                /*
+                    Cada sample, amplitude tem como informação que o compoem dada por um numero de bits
+                    que é indicado em Subchunk1Size que neste caso é 16 bits, com 16bits ele consegue 
+                    informar a amplitude.
+                */
+                if (fread(&byte, sizeof(int16_t), 1, LEARQUIVO) != 1) {
+                    break;
                 }
                 count++;
 
                 if(count % 16 == 0) {
                     fprintf(ESCREVENDO,"\n");
                 }
-                // %02X -> Imprime o byte em hexadecimal (X), com 2 dígitos, preenchidos com zero (0).
-                fprintf(ESCREVENDO,"%02X ", byte); 
+                
+                fprintf(ESCREVENDO,"%d ", byte); 
             }
             
             fprintf(ESCREVENDO,"\n\n--- Fim dos Dados de Audio ---\n");
@@ -151,7 +154,13 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
     fclose(ESCREVENDO);
 }
 
-// void EXTRAIR_AUDIO(wav_file * p) {}
+void EXTRAIR_AUDIO(wav_file * p, char * nome_arq) {
+    FILE * ESCREVENDO;
+    ESCREVENDO = fopen("saida.wav","wb");
+        
+
+    fclose(ESCREVENDO);
+}
 
 int main () {
 
