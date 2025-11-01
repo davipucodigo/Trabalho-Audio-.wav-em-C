@@ -154,15 +154,22 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
     fclose(ESCREVENDO);
 }
 
+//                                              (Em segundos)
 void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int tcorte) {
     FILE * LENDO;
     FILE * ESCREVENDO;
     LENDO = fopen(nome_arq,"rb");
     ESCREVENDO = fopen("saida.wav","wb");
 
-    int tempo_total;
-
-
+    //Calculo tempo de corte
+    int byte_que_ocorrerá_o_corte = p->BitsPerSample * tcorte; // Usar numeros inteiros no tcorte;
+    printf("\n %d \n", byte_que_ocorrerá_o_corte);
+    if ( byte_que_ocorrerá_o_corte >= p->Subchunk2Size) {
+        printf("Erro: Tempo de corte (%d segundos) e maior ou igual ao audio total.\n", tcorte);
+        fclose(LENDO);
+        fclose(ESCREVENDO);
+        return;
+    }
 
     fclose(LENDO);
     fclose(ESCREVENDO);
@@ -174,7 +181,7 @@ int main () {
     char endereço_arquivo[100] = "audio/smb_world_clear.wav";
 
     MOSTRA_AUDIO(&audio,endereço_arquivo);
-    EXTRAIR_AUDIO(&audio,endereço_arquivo,);
+    EXTRAIR_AUDIO(&audio,endereço_arquivo,3);
     printf("\n\n");
     //MENU();
         // --------- Audio cut interface
