@@ -141,7 +141,7 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
                 }
                 count++;
 
-                if(count % 16 == 0) {
+                if(count % 1 == 0) {
                     fprintf(ESCREVENDO,"\n");
                 }
                 
@@ -154,11 +154,17 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
     fclose(ESCREVENDO);
 }
 
-void EXTRAIR_AUDIO(wav_file * p, char * nome_arq) {
+void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int tcorte) {
+    FILE * LENDO;
     FILE * ESCREVENDO;
+    LENDO = fopen(nome_arq,"rb");
     ESCREVENDO = fopen("saida.wav","wb");
-        
 
+    int tempo_total;
+
+
+
+    fclose(LENDO);
     fclose(ESCREVENDO);
 }
 
@@ -168,7 +174,7 @@ int main () {
     char endereço_arquivo[100] = "audio/smb_world_clear.wav";
 
     MOSTRA_AUDIO(&audio,endereço_arquivo);
-    //EXTRAIR_AUDIO(&audio);
+    EXTRAIR_AUDIO(&audio,endereço_arquivo,);
     printf("\n\n");
     //MENU();
         // --------- Audio cut interface
