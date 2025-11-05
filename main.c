@@ -313,7 +313,7 @@ int main () {
     wav_file audio;
 
     //Variaveis de Ajuste
-    int op;
+    int op = 0;
     char endereço_arquivo[100] = "audio/smb_world_clear.wav";
     float volume;
     float inicio;
@@ -322,17 +322,28 @@ int main () {
 
     while(loop) {
         MENU();
+        op = 0;
         MOSTRA_AUDIO(&audio,endereço_arquivo);
+        scanf("%d", &op);
+        fflush(stdin);
         switch (op)
             {
             case 1:
                 //Escreve um novo endereço;
+                printf("Trocar endereço, digite algo como pasta/arquivo.wav, use um wav 16bit de 1 canal: ");
+                scanf("%s",endereço_arquivo);
+                fflush(stdin);
                 break;
             case 2:
-                AUMENTAR_AMPLITUDE(&audio,endereço_arquivo,volume);
+                printf("\n Insira o inicio e termino do recorte em segundos: ");
+                scanf("%f %f", &inicio, &fim);
+                fflush(stdin);
+                EXTRAIR_AUDIO(&audio,endereço_arquivo,inicio,fim);
                 break;
             case 3:
-                EXTRAIR_AUDIO(&audio,endereço_arquivo,inicio,fim);
+                printf("\n Insira o volume desejado, use 1.x para acrescentar e 0.x decrementar o volume: ");
+                scanf("%f",&volume);
+                AUMENTAR_AMPLITUDE(&audio,endereço_arquivo,volume);
                 break;
             case 4:
                 INVERTENDO_AUDIO(&audio,endereço_arquivo);
@@ -341,6 +352,7 @@ int main () {
                 loop = 0;
                 break;
         }
+    }
     printf("\n\n");
     return 0;
 }
