@@ -20,10 +20,11 @@ void MENU () {
         printf("\n|                                                 | ");
         printf("\n| DAVI SANT'ANNA VIEIRA  -  4324                  | ");
         printf("\n| - - - - - - - - - - - - - - - - - - - - - - - - | ");
-        printf("\n|  1> Tocar                                       | ");
+        printf("\n|  1> Inserir Audio                               | ");
         printf("\n|  2> Extrair trecho                              | ");
         printf("\n|  3> Volume                                      | ");
-        printf("\n|  4> Velocidade                                  | ");
+        printf("\n|  4> Inverter                                    | ");
+        printf("\n|  5> Exit                                        | ");
         printf("\n|_________________________________________________| ");
         printf("\n Escolha o numero >>");
         printf("\n");
@@ -180,9 +181,7 @@ void AUMENTAR_AMPLITUDE(wav_file * p, char * nome_arq, float fator_volume) {
 
     while (bytes_restantes > 0) {
         
-        if (fread(&sample, sizeof(int16_t), 1, LENDO) != 1) { // em quanto eu ler 1 ele está lendo os bytes e guardando em sample
-            break; // Fim de arquivo
-        }
+        fread(&sample, sizeof(int16_t), 1, LENDO);
 
         float novo_valor_float = (float)sample * fator_volume; // A magica acontece aqui.
 
@@ -295,9 +294,7 @@ void INVERTENDO_AUDIO(wav_file * p, char * nome_arq) {
     
     while (samples_restantes > 0) { 
         
-        if (fread(&sample, sizeof(int16_t), 1, LENDO) != 1) {
-             break;
-        }
+        fread(&sample, sizeof(int16_t), 1, LENDO);
 
         fwrite(&sample, sizeof(int16_t), 1, ESCREVENDO);
         fseek(LENDO, MARCHARE_SAMPLE, SEEK_CUR); 
@@ -312,15 +309,38 @@ void INVERTENDO_AUDIO(wav_file * p, char * nome_arq) {
 
 int main () {
 
+    //Audio 
     wav_file audio;
+
+    //Variaveis de Ajuste
+    int op;
     char endereço_arquivo[100] = "audio/smb_world_clear.wav";
+    float volume;
+    float inicio;
+    float fim;
+    int loop = 1;
 
-    MOSTRA_AUDIO(&audio,endereço_arquivo);
-    AUMENTAR_AMPLITUDE(&audio,endereço_arquivo,0.1); // feito Amplitude
-    EXTRAIR_AUDIO(&audio,endereço_arquivo,3.7,5.913);
-    INVERTENDO_AUDIO(&audio,endereço_arquivo);
-
+    while(loop) {
+        MENU();
+        MOSTRA_AUDIO(&audio,endereço_arquivo);
+        switch (op)
+            {
+            case 1:
+                //Escreve um novo endereço;
+                break;
+            case 2:
+                AUMENTAR_AMPLITUDE(&audio,endereço_arquivo,volume);
+                break;
+            case 3:
+                EXTRAIR_AUDIO(&audio,endereço_arquivo,inicio,fim);
+                break;
+            case 4:
+                INVERTENDO_AUDIO(&audio,endereço_arquivo);
+                break;
+            case 5:
+                loop = 0;
+                break;
+        }
     printf("\n\n");
-    //MENU();
     return 0;
 }
