@@ -55,9 +55,11 @@ void MENU () {
         O número de amostras (samples) de áudio gravadas
         por segundo (em Hz). 22050 Hz é uma taxa comum 
         (por exemplo, metade da qualidade de CD).
+        O Sample Rate define a taxa na qual o áudio deve ser "tocado" (amostras/segundo).
+        É o relógio mestre que dita a velocidade e, como consequência, o tom do áudio.
 
     ByteRate:
-        O número de bytes que devem ser lidos por segundo (em B/s).
+        O Byte Rate define a taxa na qual o hardware tem que mover o arquivo (Bytes/segundo) para acompanhar o áudio em tempo real.
         Calculado como: SampleRate * NumChannels * (BitsPerSample / 8).
         Neste caso: 22050⋅1⋅(16/8)=22050⋅2=44100.
 
@@ -154,25 +156,158 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
     fclose(ESCREVENDO);
 }
 
-//                                              (Em segundos)
-void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int tcorte) {
+void AUMENTAR_AMPLITUDE(wav_file * p, char * nome_arq, float fator_volume) {
     FILE * LENDO;
     FILE * ESCREVENDO;
-    LENDO = fopen(nome_arq,"rb");
-    ESCREVENDO = fopen("saida.wav","wb");
 
-    //Calculo tempo de corte
-    int byte_que_ocorrerá_o_corte = p->BitsPerSample * tcorte; // Usar numeros inteiros no tcorte;
-    printf("\n %d \n", byte_que_ocorrerá_o_corte);
-    if ( byte_que_ocorrerá_o_corte >= p->Subchunk2Size) {
-        printf("Erro: Tempo de corte (%d segundos) e maior ou igual ao audio total.\n", tcorte);
-        fclose(LENDO);
-        fclose(ESCREVENDO);
-        return;
+    LENDO = fopen(nome_arq, "rb");
+    ESCREVENDO = fopen("saida_volume.wav", "wb"); // Novo arquivo de saída
+    
+    // Ler e copiar o cabeçalho
+    wav_file header;
+    fread(&header, sizeof(wav_file), 1, LENDO);
+    fwrite(&header, sizeof(wav_file), 1, ESCREVENDO);
+
+    // Processar e ajustar a amplitude sample por sample
+    uint32_t bytes_restantes = header.Subchunk2Size; //Numero total de bytes que vou ter que lê
+    uint16_t bytes_por_sample = header.BlackAlign; // Tamanho do frame (2 bytes para 16-bit mono, 4 para 16-bit stereo)
+    
+    int16_t sample; 
+    
+    // O valor máximo para um sample de 16 bits para não saturar.
+    const int16_t MAX_SAMPLE = 32767; 
+    const int16_t MIN_SAMPLE = -32768; 
+
+    while (bytes_restantes > 0) {
+        
+        if (fread(&sample, sizeof(int16_t), 1, LENDO) != 1) { // em quanto eu ler 1 ele está lendo os bytes e guardando em sample
+            break; // Fim de arquivo
+        }
+
+        float novo_valor_float = (float)sample * fator_volume; // A magica acontece aqui.
+
+        if (novo_valor_float > MAX_SAMPLE) {
+            sample = MAX_SAMPLE;
+        } else if (novo_valor_float < MIN_SAMPLE) {
+            sample = MIN_SAMPLE;
+        } else {
+            sample = (int16_t)novo_valor_float;
+        }
+
+        fwrite(&sample, sizeof(int16_t), 1, ESCREVENDO); // guarda o sample
+        
+        bytes_restantes -= sizeof(int16_t); //A cada leitura eu disconto um bloco de 2 bytes(16bits) quando for 0 ele vai parar por conta do if lá de cima.
+    }
+
+    // Fechamento e Sucesso
+    fclose(LENDO);
+    fclose(ESCREVENDO);
+
+    printf("\nVolume ajustado com fator %.2fx. Salvo em saida_volume.wav\n", fator_volume);
+}
+
+void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int t_inicio, int t_fim) {
+    FILE * LENDO;
+    FILE * ESCREVENDO;
+    
+    LENDO = fopen(nome_arq, "rb");
+    ESCREVENDO = fopen("saida_extraida.wav", "wb");
+    
+    // Ler o cabeçalho
+    wav_file original_header;
+
+    fread(&original_header, sizeof(wav_file), 1, LENDO);
+
+    uint32_t bytes_por_segundo = original_header.ByteRate;
+    uint32_t bytes_inicio = bytes_por_segundo * t_inicio; 
+    
+    // Duração do Trecho a Extrair
+    int duracao = t_fim - t_inicio;
+    
+    // Bytes a Extrair (tamanho do novo áudio)
+    uint32_t bytes_a_extrair = bytes_por_segundo * duracao; 
+    
+    //Atualizar o cabeçalho para o arquivo de saída
+    wav_file new_header = original_header;
+    
+    new_header.Subchunk2Size = bytes_a_extrair; //Adiociona o novo tamanjo
+    
+    // O tamanho total do arquivo é o novo Subchunk2Size + 36 bytes do cabeçalho
+    // (sizeof(wav_file) - 8) = 44 - 8 = 36
+    new_header.ChunkSize = new_header.Subchunk2Size + (sizeof(wav_file) - 8); 
+
+    // Escrever o novo cabeçalho no arquivo de saída
+    fwrite(&new_header, sizeof(wav_file), 1, ESCREVENDO);
+
+    //Manda pro inicio
+    fseek(LENDO,sizeof(original_header) + bytes_inicio, SEEK_CUR);
+    // |......inicio.......|
+    // |...........fim....................|
+    //                     |....Duração...|
+    //                     |..............| aí calcula o numero de bytes desta duração e guarda, recalcula tudo os tamanho.
+
+    // Copiar o trecho
+    uint32_t bytes_restantes = bytes_a_extrair;
+    uint32_t tempo_decorrido = bytes_inicio;
+    uint32_t bytes_fim = bytes_por_segundo * t_fim;
+    
+    int16_t sample;
+
+    while (bytes_restantes > 0) {
+
+        if (tempo_decorrido >= bytes_fim) {
+             break;
+        }
+        // Leitura 
+        fread(&sample, sizeof(int16_t), 1, LENDO);
+        
+        // Escrita
+        fwrite(&sample, sizeof(int16_t), 1, ESCREVENDO);
+        
+        // Atualização dos contadores
+        bytes_restantes -= sizeof(int16_t);
+        tempo_decorrido += sizeof(int16_t);
+    }
+    
+    fclose(LENDO);
+    fclose(ESCREVENDO);
+
+    printf("\nÁudio extraído com sucesso. Trecho de %d a %d segundos. Salvo em saida.wav\n", t_inicio, t_fim);
+}
+
+void INVERTENDO_AUDIO(wav_file * p, char * nome_arq) {
+    FILE * LENDO;
+    FILE * ESCREVENDO;
+    
+    LENDO = fopen(nome_arq, "rb");
+    ESCREVENDO = fopen("saida_invertido.wav", "wb");
+    
+    wav_file header;
+    fread(&header, sizeof(wav_file), 1, LENDO);
+    fwrite(&header, sizeof(wav_file), 1, ESCREVENDO);
+
+    int16_t sample;
+    const long MARCHARE_SAMPLE = -(2 * sizeof(int16_t));
+    long samples_restantes = header.Subchunk2Size / sizeof(int16_t); // Calcula o numero de blockAligns que tem.
+
+    fseek(LENDO, sizeof(header) + header.Subchunk2Size - sizeof(int16_t), SEEK_SET); // Leva pro fim de dados
+    fseek(ESCREVENDO, sizeof(header) , SEEK_SET); // Leva para o Incio de dados
+    
+    while (samples_restantes > 0) { 
+        
+        if (fread(&sample, sizeof(int16_t), 1, LENDO) != 1) {
+             break;
+        }
+
+        fwrite(&sample, sizeof(int16_t), 1, ESCREVENDO);
+        fseek(LENDO, MARCHARE_SAMPLE, SEEK_CUR); 
+        samples_restantes--;
     }
 
     fclose(LENDO);
     fclose(ESCREVENDO);
+
+    printf("\nÁudio invertido com sucesso. Salvo em saida_invertido.wav\n");
 }
 
 int main () {
@@ -181,9 +316,11 @@ int main () {
     char endereço_arquivo[100] = "audio/smb_world_clear.wav";
 
     MOSTRA_AUDIO(&audio,endereço_arquivo);
-    EXTRAIR_AUDIO(&audio,endereço_arquivo,3);
+    AUMENTAR_AMPLITUDE(&audio,endereço_arquivo,0.1); // feito Amplitude
+    EXTRAIR_AUDIO(&audio,endereço_arquivo,3.7,5.913);
+    INVERTENDO_AUDIO(&audio,endereço_arquivo);
+
     printf("\n\n");
     //MENU();
-        // --------- Audio cut interface
     return 0;
 }
