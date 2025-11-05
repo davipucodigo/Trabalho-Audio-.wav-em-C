@@ -27,7 +27,6 @@ void MENU () {
         printf("\n|  5> Exit                                        | ");
         printf("\n|_________________________________________________| ");
         printf("\n Escolha o numero >>");
-        printf("\n");
 }
 
 /*
@@ -157,7 +156,7 @@ void MOSTRA_AUDIO(wav_file * p, char * nome_arq) {
     fclose(ESCREVENDO);
 }
 
-void AUMENTAR_AMPLITUDE(wav_file * p, char * nome_arq, float fator_volume) {
+void AUMENTAR_AMPLITUDE(char * nome_arq, float fator_volume) {
     FILE * LENDO;
     FILE * ESCREVENDO;
 
@@ -205,7 +204,7 @@ void AUMENTAR_AMPLITUDE(wav_file * p, char * nome_arq, float fator_volume) {
     printf("\nVolume ajustado com fator %.2fx. Salvo em saida_volume.wav\n", fator_volume);
 }
 
-void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int t_inicio, int t_fim) {
+void EXTRAIR_AUDIO(char * nome_arq, int t_inicio, int t_fim) {
     FILE * LENDO;
     FILE * ESCREVENDO;
     
@@ -217,11 +216,19 @@ void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int t_inicio, int t_fim) {
 
     fread(&original_header, sizeof(wav_file), 1, LENDO);
 
+    uint32_t tempototal = original_header.Subchunk2Size/original_header.ByteRate;
     uint32_t bytes_por_segundo = original_header.ByteRate;
     uint32_t bytes_inicio = bytes_por_segundo * t_inicio; 
     
     // Duração do Trecho a Extrair
     int duracao = t_fim - t_inicio;
+
+    if (t_inicio < 0 || t_fim <= t_inicio || t_fim > tempototal) {
+        printf("Erro de limites: Valores fora do intervalo valido (0 a %u s) ou t_fim <= t_inicio.\n", tempototal);
+        fclose(LENDO);
+        fclose(ESCREVENDO);
+        return;
+    }
     
     // Bytes a Extrair (tamanho do novo áudio)
     uint32_t bytes_a_extrair = bytes_por_segundo * duracao; 
@@ -274,7 +281,7 @@ void EXTRAIR_AUDIO(wav_file * p, char * nome_arq, int t_inicio, int t_fim) {
     printf("\nÁudio extraído com sucesso. Trecho de %d a %d segundos. Salvo em saida.wav\n", t_inicio, t_fim);
 }
 
-void INVERTENDO_AUDIO(wav_file * p, char * nome_arq) {
+void INVERTENDO_AUDIO(char * nome_arq) {
     FILE * LENDO;
     FILE * ESCREVENDO;
     
@@ -316,8 +323,8 @@ int main () {
     int op = 0;
     char endereço_arquivo[100] = "audio/smb_world_clear.wav";
     float volume;
-    float inicio;
-    float fim;
+    int inicio;
+    int fim;
     int loop = 1;
 
     while(loop) {
@@ -336,17 +343,17 @@ int main () {
                 break;
             case 2:
                 printf("\n Insira o inicio e termino do recorte em segundos: ");
-                scanf("%f %f", &inicio, &fim);
+                scanf("%d %d", &inicio, &fim);
                 fflush(stdin);
-                EXTRAIR_AUDIO(&audio,endereço_arquivo,inicio,fim);
+                EXTRAIR_AUDIO(endereço_arquivo,inicio,fim);
                 break;
             case 3:
                 printf("\n Insira o volume desejado, use 1.x para acrescentar e 0.x decrementar o volume: ");
                 scanf("%f",&volume);
-                AUMENTAR_AMPLITUDE(&audio,endereço_arquivo,volume);
+                AUMENTAR_AMPLITUDE(endereço_arquivo,volume);
                 break;
             case 4:
-                INVERTENDO_AUDIO(&audio,endereço_arquivo);
+                INVERTENDO_AUDIO(endereço_arquivo);
                 break;
             case 5:
                 loop = 0;
