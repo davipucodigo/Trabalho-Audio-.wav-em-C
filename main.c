@@ -246,7 +246,7 @@ void EXTRAIR_AUDIO(char * nome_arq, int t_inicio, int t_fim) {
     fwrite(&new_header, sizeof(wav_file), 1, ESCREVENDO);
 
     //Manda pro inicio
-    fseek(LENDO,sizeof(original_header) + bytes_inicio, SEEK_CUR);
+    fseek(LENDO,sizeof(original_header) + bytes_inicio, SEEK_SET);
     // |......inicio.......|
     // |...........fim....................|
     //                     |....Duração...|
